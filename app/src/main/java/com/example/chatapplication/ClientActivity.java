@@ -9,6 +9,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
@@ -25,7 +26,6 @@ import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.BlockingQueue;
 
 public class ClientActivity extends AppCompatActivity {
-
     Socket socket;
     BufferedReader br;
     PrintWriter out;
@@ -102,6 +102,7 @@ public class ClientActivity extends AppCompatActivity {
 
         TextView myid = (TextView)findViewById(R.id.myid);
         msgEt = (EditText)findViewById(R.id.msgEt);
+
         Intent intent = getIntent();
         myid.setText(intent.getStringExtra("id"));
 

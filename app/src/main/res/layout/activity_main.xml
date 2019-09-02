@@ -8,33 +8,83 @@
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-
-        <TextView
-            android:text="아이디"
+        <ImageView
+            android:layout_weight="1"
+            android:scaleType="fitCenter"
+            android:adjustViewBounds="true"
+            android:src="@drawable/water"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
-        <EditText
-            android:id="@+id/idTv"
+        <LinearLayout
+            android:layout_weight="1"
+            android:orientation="vertical"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content">
 
-        <TextView
-            android:text="비밀번호"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            <LinearLayout
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
 
-        <EditText
-            android:id="@+id/pwTv"
-            android:inputType="numberPassword"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+                <EditText
+                    android:layout_marginTop="50px"
+                    android:layout_marginLeft="100px"
+                    android:layout_marginRight="100px"
+                    android:layout_marginBottom="50px"
+                    android:hint="아이디"
+                    android:id="@+id/idTv"
+                    android:background="@drawable/border"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
 
-        <Button
-            android:text="로그인하기"
-            android:id="@+id/loginBtn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+                <EditText
+                    android:layout_marginLeft="100px"
+                    android:layout_marginRight="100px"
+                    android:layout_marginBottom="50px"
+                    android:hint="비밀번호"
+                    android:id="@+id/pwTv"
+                    android:background="@drawable/border"
+                    android:inputType="textPassword"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_gravity="center"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <Button
+                    android:layout_gravity="center"
+                    android:layout_marginRight="20px"
+                    android:text="로그인하기"
+                    android:backgroundTint="@android:color/holo_green_light"
+                    android:background="@drawable/border"
+                    android:id="@+id/loginBtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+
+                <Button
+                    android:layout_gravity="center"
+                    android:layout_marginLeft="20px"
+                    android:text="회원가입"
+                    android:backgroundTint="@android:color/holo_green_light"
+                    android:background="@drawable/border"
+                    android:id="@+id/registBtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+
+            </LinearLayout>
+
+
+        </LinearLayout>
+
 
     </LinearLayout>
 

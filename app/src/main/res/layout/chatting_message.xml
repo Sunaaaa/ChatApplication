@@ -4,6 +4,8 @@
     android:layout_height="match_parent">
 
     <TextView
+        android:background="@drawable/border"
+        android:padding="20px"
         android:id="@+id/msg"
         android:text="채팅 메시지입니다."
         android:textAppearance="?android:attr/textAppearanceMedium"        android:gravity="left|center_vertical|center_horizontal"
