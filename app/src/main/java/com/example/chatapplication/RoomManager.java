@@ -5,12 +5,8 @@ import java.util.List;
 
 public class RoomManager {
     private List<Room> roomList = new ArrayList<Room>();
-    private int roomCount;
-    private int cunRoomNum;
 
     public RoomManager() {
-        this.roomCount = 0;
-        this.cunRoomNum = 1;
     }
 
     public void addRoom(Room room){
@@ -19,7 +15,6 @@ public class RoomManager {
 
     public void removeRoom(Room room){
         this.roomList.remove(room);
-        roomCount--;
     }
 
     public List<Room> getRoomList() {
@@ -30,19 +25,4 @@ public class RoomManager {
         this.roomList = roomList;
     }
 
-    public int getRoomCount() {
-        return roomCount;
-    }
-
-    public void setRoomCount(int roomCount) {
-        this.roomCount = roomCount;
-    }
-
-    public int getCunRoomNum() {
-        return cunRoomNum;
-    }
-
-    public void setCunRoomNum(int cunRoomNum) {
-        this.cunRoomNum = cunRoomNum;
-    }
 }
