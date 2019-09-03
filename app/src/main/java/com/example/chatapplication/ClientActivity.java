@@ -47,11 +47,13 @@ public class ClientActivity extends AppCompatActivity {
             String msg ="";
             try {
                 socket = new Socket("70.12.115.72", 7878);
+                Log.i("ReceiveRunnable",socket.toString());
+
                 br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 out = new PrintWriter(socket.getOutputStream());
                 Log.i("ReceiveRunnable", "서버 연결 성공");
             }catch (Exception e) {
-                Log.i("ReceiveRunnable", e.toString());
+                Log.i("ReceiveRunnable", "서버 연결 실패" +  e.toString());
             }
             try {
                 while (((msg = br.readLine()) != null)) {
@@ -135,6 +137,8 @@ public class ClientActivity extends AppCompatActivity {
         };
 
         ReceiveRunnable receiveRunnable = new ReceiveRunnable(br, handler);
+        Log.i("ReceiveRunnable","ReceiveRunnable 실행할 예정임");
+
         Thread t = new Thread(receiveRunnable);
         t.start();
 

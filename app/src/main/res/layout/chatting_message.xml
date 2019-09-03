@@ -5,10 +5,13 @@
 
     <TextView
         android:background="@drawable/border"
+        android:textColor="@android:color/black"
         android:padding="20px"
         android:id="@+id/msg"
         android:text="채팅 메시지입니다."
-        android:textAppearance="?android:attr/textAppearanceMedium"        android:gravity="left|center_vertical|center_horizontal"
+
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:gravity="left|center_vertical|center_horizontal"
         android:layout_marginLeft="20dp"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
