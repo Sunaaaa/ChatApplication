@@ -24,5 +24,4 @@ public class RoomManager {
     public void setRoomList(List<Room> roomList) {
         this.roomList = roomList;
     }
-
 }
