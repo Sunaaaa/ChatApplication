@@ -1,5 +1,6 @@
 package com.example.chatapplication;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -7,6 +8,8 @@ import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -14,8 +17,14 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.stream.Stream;
 
 public class WaitingRoomActivity extends AppCompatActivity {
@@ -25,8 +34,75 @@ public class WaitingRoomActivity extends AppCompatActivity {
     TextView wr_count;
     ChatUser user;
     Stream<Room> stream;
-    int roomCnt = 0;
+    Socket socket;
+    PrintWriter out = null;
+    BufferedReader br = null;
+    BlockingQueue blockingQeque = new ArrayBlockingQueue(30);
 
+    class ReceiveRunnable implements Runnable{
+        private BufferedReader br;
+        private Handler handler;
+
+        public ReceiveRunnable(BufferedReader br, Handler handler) {
+            this.br = br;
+            this.handler = handler;
+        }
+
+        @Override
+        public void run() {
+            String msg ="";
+            try {
+                socket = new Socket("70.12.115.72", 7878);
+                Log.i("ReceiveRunnable",socket.toString());
+
+                br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                out = new PrintWriter(socket.getOutputStream());
+                Log.i("ReceiveRunnable", "서버 연결 성공");
+                out.println("/@showRoomList");
+                out.flush();
+            }catch (Exception e) {
+                Log.i("ReceiveRunnable", "서버 연결 실패" +  e.toString());
+            }
+            try {
+                while (((msg = br.readLine()) != null)){
+                    Bundle bundle = new Bundle();
+                    String[] msgArray = msg.split(",");
+                    Log.i("Waiting_Room_Receive", msgArray[0]);
+                    Log.i("Waiting_Room_Receive", msgArray[1]);
+
+                    if (msgArray[0].equals("/@showRoomList")){
+                        Log.i("Waiting_Room_Receive", msg);
+                        bundle.putString("data", msgArray[1]);
+                        bundle.putString("protocol", "/@showRoomList");
+                    }
+                    Message message = new Message();
+                    message.setData(bundle);
+                    handler.sendMessage(message);
+                    Log.i("Waiting_Room_Receive", msg);
+                    Log.i("Waiting_Room_Receive", "보낸다.");
+                }
+            }catch (Exception e){
+                Log.i("Waiting_Room_Error", "서버랑 연결해서 존재하는 방만들기 실패.." +  e.toString());
+            }
+        }
+    }
+    class SendRunnable implements Runnable{
+        BlockingQueue blockingQueue;
+        public SendRunnable(BlockingQueue blockingQueue) {
+            this.blockingQueue = blockingQueue;
+        }
+        @Override
+        public void run() {
+            try {
+                String msg = (String)blockingQueue.take();
+                out.println(msg);
+                out.flush();
+                Log.i("SendRunnable", "보내기 얍얍얍!"+msg);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -34,18 +110,44 @@ public class WaitingRoomActivity extends AppCompatActivity {
 
         wr_myid = (TextView)findViewById(R.id.wr_myid);
         Button newRoomBtn = (Button)findViewById(R.id.newRoomBtn);
-        Button wr_exBtn = (Button)findViewById(R.id.wr_exBtn);
+        final Button wr_exBtn = (Button)findViewById(R.id.wr_exBtn);
+
         wr_count = (TextView)findViewById(R.id.wr_count);
 
         Intent i = getIntent();
-        user = new ChatUser(i.getStringExtra("id"));
-        Log.i("Waiting_Room",user.getUsername());
+        user = i.getParcelableExtra("user");
+        Log.i("Waiting_Room","내 이름은 " + user.getUsername());
 
         wr_myid.setText(user.getUsername());
-        wr_count.setText("채팅 (" + roomManager.getRoomCount() + ")");
+        wr_count.setText("채팅 (" + roomManager.getRoomList().size() + ")");
         final ListView listView = (ListView)findViewById(R.id.roomList);
         final RoomAdapter adapter = new RoomAdapter(this);
         listView.setAdapter(adapter);
+
+
+        final Handler handler = new Handler(){
+            @Override
+            public void handleMessage(@NonNull Message msg) {
+                super.handleMessage(msg);
+                Bundle bundle = msg.getData();
+                String protocol = bundle.getString("protocol");
+                if (protocol.equals("/@showRoomList")){
+                    String data = bundle.getString("data");
+                    wr_count.setText(data);
+                }
+//                adapter.addItem(mymsg);
+//                adapter.notifyDataSetChanged();
+//                Log.i("Handler", mymsg);
+            }
+        };
+
+        ReceiveRunnable receiveRunnable = new ReceiveRunnable(br, handler);
+        //SendRunnable sendRunnable = new SendRunnable(blockingQeque);
+        Thread rt = new Thread(receiveRunnable);
+        //Thread st = new Thread(sendRunnable);
+        rt.start();
+        //st.start();
+
 
         wr_exBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -58,6 +160,7 @@ public class WaitingRoomActivity extends AppCompatActivity {
             }
         });
 
+        // 방만들기
         newRoomBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -81,32 +184,24 @@ public class WaitingRoomActivity extends AppCompatActivity {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         room.setTitle(et.getText().toString());
-                        roomCnt++;
-                        room.setRoomno(roomCnt);
                         room.setBoss(user.getUsername());
                         roomManager.addRoom(room);
-                        wr_count.setText("채팅 (" + roomCnt + ")");
-                        adapter.addItem(room);
-                        adapter.notifyDataSetChanged();
+                        String str = "/@newRoom" + ',' +room.getTitle() + ',' +room.getBoss();
+                        blockingQeque.add(str);
+                        SendRunnable sendRunnable = new SendRunnable(blockingQeque);
+                        Thread t = new Thread(sendRunnable);
+                        t.start();
+
+                        Log.i("STR__________", str);
                     }
                 });
-                dialog.setNegativeButton("NO", new DialogInterface.OnClickListener() {
+                dialog.setNegativeButton("NO", new
+                        DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
-
                     }
                 });
                 dialog.show();
-
-                Log.i("Waiting_Room","방만들기 완료");
-
-                Log.i("RRRRRRR__RRRRR","=================================");
-                for (int i = 0; i < roomManager.getRoomList().size(); i++){
-                    Log.i("RRRRRRR__RRRRR","--------------" + roomManager.getRoomList().get(i).getRoomno());
-                    Log.i("RRRRRRR__RRRRR","--------------" + roomManager.getRoomList().get(i).getTitle());
-                }
-                Log.i("RRRRRRR__RRRRR","=================================");
-
             }
         });
     }

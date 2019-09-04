@@ -7,7 +7,7 @@ public class Room implements Parcelable {
 
     private String boss;
     private String title;
-    private static int roomno;
+    private int roomno;
 
     public Room() {
     }

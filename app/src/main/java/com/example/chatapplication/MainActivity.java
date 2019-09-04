@@ -12,6 +12,7 @@ import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity {
 
+    ChatUser user;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -24,10 +25,11 @@ public class MainActivity extends AppCompatActivity {
         loginBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                user = new ChatUser(idTv.getText().toString());
                 Intent i = new Intent();
                 ComponentName cname = new ComponentName("com.example.chatapplication","com.example.chatapplication.WaitingRoomActivity");
                 i.setComponent(cname);
-                i.putExtra("id",idTv.getText().toString());
+                i.putExtra("user",user);
                 startActivity(i);
                 Log.i("Main","메인 인텐트 실행");
             }
