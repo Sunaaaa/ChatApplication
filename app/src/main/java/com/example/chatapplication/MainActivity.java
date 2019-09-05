@@ -27,11 +27,18 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 user = new ChatUser(idTv.getText().toString());
                 Intent i = new Intent();
-                ComponentName cname = new ComponentName("com.example.chatapplication","com.example.chatapplication.WaitingRoomActivity");
+                Intent ia = new Intent();
+                ComponentName cname = new ComponentName("com.example.chatapplication","com.example.chatapplication.ChatService");
                 i.setComponent(cname);
                 i.putExtra("user",user);
-                startActivity(i);
-                Log.i("Main","메인 인텐트 실행");
+                startService(i);
+                Log.i("Main","ChatService 실행");
+
+                ia.setAction("WAITING_ROOM_ACTIVITY");
+                ia.putExtra("user",user);
+                startActivity(ia);
+                Log.i("Main","Waiting Room Activity실행");
+
             }
         });
 

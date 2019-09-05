@@ -16,8 +16,18 @@
             android:enabled="true"
             android:exported="true"></service>
 
-        <activity android:name=".ClientActivity" />
-        <activity android:name=".WaitingRoomActivity" />
+        <activity android:name=".ClientActivity">
+            <intent-filter>
+                <action android:name="CLIENT_ACTIVITY" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".WaitingRoomActivity" >
+            <intent-filter>
+                <action android:name="WAITING_ROOM_ACTIVITY" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

@@ -5,10 +5,13 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Message;
 import android.util.Log;
 import android.view.View;
@@ -35,166 +38,78 @@ public class WaitingRoomActivity extends AppCompatActivity {
     TextView wr_myid;
     TextView wr_count;
     ChatUser user;
-    Socket socket;
-    PrintWriter out = null;
-    BufferedReader br = null;
-    BlockingQueue blockingQeque = new ArrayBlockingQueue(30);
+    ChatService chatService;
+    boolean isService = false;
 
-    class ReceiveRunnable implements Runnable{
-        private BufferedReader br;
-        private Handler handler;
-
-        public ReceiveRunnable(BufferedReader br, Handler handler) {
-            this.br = br;
-            this.handler = handler;
+    private ServiceConnection connection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
+            ChatService.ChatBinder chatBinder = (ChatService.ChatBinder) iBinder;
+            chatService = chatBinder.getService();
+            isService = true;
         }
 
         @Override
-        public void run() {
-            String msg ="";
-            try {
-                socket = new Socket("70.12.115.72", 7878);
-                Log.i("ReceiveRunnable",socket.toString());
-
-                br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                out = new PrintWriter(socket.getOutputStream());
-                Log.i("ReceiveRunnable", "서버 연결 성공");
-                out.println("/@showRoomList" );
-                out.flush();
-            }catch (Exception e) {
-                Log.i("ReceiveRunnable", "서버 연결 실패" +  e.toString());
-            }
-            try {
-                while (((msg = br.readLine()) != null)){
-                    Log.i("Waiting_Room_Receive", "받는다.");
-                    Bundle bundle = new Bundle();
-                    String[] msgArray = msg.split(",");
-                    Log.i("Waiting_Room_Receive", msgArray[0]);
-                    Log.i("Waiting_Room_Receive", msgArray[1]);
-
-                    if (msgArray[0].equals("/@showRoomList")){
-                        Log.i("Waiting_Room_Receive", "0이다.");
-                        Log.i("Waiting_Room_Receive", msg);
-                        bundle.putString("data", msgArray[1]);
-                        bundle.putString("protocol", "/@showRoomList");
-                    }
-                    if (msgArray[0].equals("/@updateRoomList")){
-                        Log.i("Waiting_Room_Receive", "방만들었");
-                        Log.i("Waiting_Room_Receive", msg);
-                        bundle.putStringArray("data", msgArray);
-                        bundle.putString("protocol", "/@updateRoomList");
-                    }
-                    Message message = new Message();
-                    message.setData(bundle);
-                    handler.sendMessage(message);
-                    Log.i("Waiting_Room_Receive", msg);
-                    Log.i("Waiting_Room_Receive", "보낸다.");
-                }
-            }catch (Exception e){
-                Log.i("Waiting_Room_Error", "서버랑 연결해서 존재하는 방만들기 실패.." +  e.toString());
-            }
+        public void onServiceDisconnected(ComponentName componentName) {
+            isService = false;
         }
+    };
+    @Override
+    protected void onStart() {
+        super.onStart();
+        // Bind to ChatService
+        Intent intent = new Intent(WaitingRoomActivity.this, ChatService.class);
+        bindService(intent, connection, Context.BIND_ABOVE_CLIENT);
     }
-    class SendRunnable implements Runnable{
-        BlockingQueue blockingQueue;
-        public SendRunnable(BlockingQueue blockingQueue) {
-            this.blockingQueue = blockingQueue;
-        }
-        @Override
-        public void run() {
-            try {
-                while(true){
-                    String msg = (String)blockingQueue.take();
-                    Log.i("SendRunnable", "보내기 얍얍얍!"+msg);
-                    out.println(msg);
-                    out.flush();
-                    Log.i("SendRunnable", "보내기 얍얍얍!___________"+msg);
-                }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        unbindService(connection);
+        isService = false;
     }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_waiting_room);
 
+        // 레이아웃 객체 생성
         wr_myid = (TextView)findViewById(R.id.wr_myid);
         Button newRoomBtn = (Button)findViewById(R.id.newRoomBtn);
         final Button wr_exBtn = (Button)findViewById(R.id.wr_exBtn);
-
         wr_count = (TextView)findViewById(R.id.wr_count);
-
-        Intent i = getIntent();
-        user = i.getParcelableExtra("user");
-        Log.i("Waiting_Room","내 이름은 " + user.getUsername());
-
-        wr_myid.setText(user.getUsername());
-        wr_count.setText("채팅 (" + roomManager.getRoomList().size() + ")");
         final ListView listView = (ListView)findViewById(R.id.roomList);
+
+        // Intent로 값 가져와 설정
+        Intent fromServiceIntent = getIntent();
+        // 사용자 이름 가져와
+        user = fromServiceIntent.getParcelableExtra("user");
+        Log.i("Waiting_Room","내 이름은 " + user.getUsername());
+        wr_myid.setText(user.getUsername());
+
+        // 채팅방 총 개수
+        int roomSize = roomManager.getRoomList().size();
+        wr_count.setText("채팅 (" + roomSize + ")");
+
+        // 채팅방 목록
         final RoomAdapter adapter = new RoomAdapter(this);
         listView.setAdapter(adapter);
 
-
-        final Handler handler = new Handler(){
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
-            public void handleMessage(@NonNull Message msg) {
-                super.handleMessage(msg);
-                Bundle bundle = msg.getData();
-                String protocol = bundle.getString("protocol");
-                if (protocol.equals("/@showRoomList")){
-                    String data = bundle.getString("data");
-                    wr_count.setText(data);
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                Log.i("WR_ListVIew","ListVIew 클릭");
+                if (!isService){
+                    Log.i("isService", "isService가 없어요");
+                    return;
                 }
-                if (protocol.equals("/@updateRoomList")){
-                    String[] data = bundle.getStringArray("data");
-                    for (int i = 0; i < data.length-1; i++){
-                        Log.i("data이다.", data[i]);
-                    }
-                    wr_count.setText(data[1]);
-                    List<Room> rlist = new ArrayList<Room>();
-                    for (int i = 2; i < data.length-1; i+=3){
-                        Room r = new Room();
-                        int no = Integer.parseInt(data[i]);
-                        r.setRoomno(no);
-                        r.setTitle(data[i+1]);
-                        r.setBoss(data[i+2]);
-                        rlist.add(r);
-                        adapter.addItem(r);
-                        adapter.notifyDataSetChanged();
-                    }
-//                    RoomAdapter roomAdapter2 = new RoomAdapter(getApplicationContext(), rlist);
-//                    listView.setAdapter(adapter);
-                    Log.i("Handler", "리스트 출력");
+                else {
+                    Log.i("isService", "isService도 있고 바인딩도 되었다. ");
                 }
 
-                listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                        Log.i("Handler_Item_Click", "클릭되었다.");
-//                        Intent intent = new Intent();
-//                        intent.putExtra("roomNo", );
-                        int roomNo = ((Room)adapter.getItem(i)).getRoomno();
-                        Toast.makeText(getApplicationContext(), "" + roomNo, Toast.LENGTH_SHORT).show();
-                        Intent intent = new Intent();
-                        intent.putExtra("chatid", user.getUsername());
-                        intent.putExtra("chatRoomNo", ""+roomNo);
-                        ComponentName componentName = new ComponentName("com.example.chatapplication", "com.example.chatapplication.ClientActivity");
-                        intent.setComponent(componentName);
-                        startActivity(intent);
-                    }
-                });
             }
-        };
-
-        ReceiveRunnable receiveRunnable = new ReceiveRunnable(br, handler);
-        SendRunnable sendRunnable = new SendRunnable(blockingQeque);
-        Thread rt = new Thread(receiveRunnable);
-        Thread st = new Thread(sendRunnable);
-        rt.start();
-        st.start();
-
+        });
 
         wr_exBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -234,7 +149,7 @@ public class WaitingRoomActivity extends AppCompatActivity {
                         room.setBoss(user.getUsername());
                         roomManager.addRoom(room);
                         String str = "/@newRoom" + ',' +room.getTitle() + ',' +room.getBoss();
-                        blockingQeque.add(str);
+                        //blockingQeque.add(str);
 //                        SendRunnable sendRunnable = new SendRunnable(blockingQeque);
 //                        Thread t = new Thread(sendRunnable);
 //                        t.start();
