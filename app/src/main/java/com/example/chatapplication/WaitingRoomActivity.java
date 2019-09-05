@@ -35,7 +35,6 @@ public class WaitingRoomActivity extends AppCompatActivity {
     TextView wr_myid;
     TextView wr_count;
     ChatUser user;
-    Stream<Room> stream;
     Socket socket;
     PrintWriter out = null;
     BufferedReader br = null;
@@ -178,7 +177,12 @@ public class WaitingRoomActivity extends AppCompatActivity {
 //                        intent.putExtra("roomNo", );
                         int roomNo = ((Room)adapter.getItem(i)).getRoomno();
                         Toast.makeText(getApplicationContext(), "" + roomNo, Toast.LENGTH_SHORT).show();
-
+                        Intent intent = new Intent();
+                        intent.putExtra("chatid", user.getUsername());
+                        intent.putExtra("chatRoomNo", ""+roomNo);
+                        ComponentName componentName = new ComponentName("com.example.chatapplication", "com.example.chatapplication.ClientActivity");
+                        intent.setComponent(componentName);
+                        startActivity(intent);
                     }
                 });
             }

@@ -5,10 +5,20 @@
     xmlns:android="http://schemas.android.com/apk/res/android" >
 
     <LinearLayout
+        android:padding="30px"
         android:layout_weight="1"
         android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
+        <TextView
+            android:text="방번호"
+            android:layout_weight="1"
+            android:id="@+id/chatRoomNo"
+            android:textSize="70px"
+            android:textStyle="bold"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
         <TextView
             android:text="내 아이디가 여기에 "
             android:layout_weight="3"
@@ -19,16 +29,25 @@
         <Button
             android:textColor="@android:color/white"
             android:textStyle="bold"
+            android:id="@+id/toWRBtn"
+            android:background="@drawable/greembutton"
+            android:text="대기실로"
+            android:layout_weight="1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <Button
+            android:textColor="@android:color/white"
+            android:textStyle="bold"
             android:id="@+id/exBtn"
             android:background="@drawable/greembutton"
-            android:text="나가기"
+            android:text="방나가기"
             android:layout_weight="1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
 
     </LinearLayout>
     <LinearLayout
-        android:layout_weight="4"
+        android:layout_weight="6"
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
@@ -37,7 +56,7 @@
             android:divider="#FFFFFF"
             android:id="@+id/chat"
             android:layout_width="match_parent"
-            android:layout_height="571dp"
+            android:layout_height="match_parent"
             android:background="@android:color/holo_green_light">
 
         </ListView>

@@ -3,6 +3,7 @@ package com.example.chatapplication;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -102,17 +103,22 @@ public class ClientActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_client);
 
+        TextView chatRoomNo = (TextView)findViewById(R.id.chatRoomNo);
         TextView myid = (TextView)findViewById(R.id.myid);
         msgEt = (EditText)findViewById(R.id.msgEt);
 
         Intent intent = getIntent();
-        myid.setText(intent.getStringExtra("id"));
+        chatRoomNo.setText(intent.getStringExtra("chatRoomNo"));
+        Log.i("너의 방번호를 보여라", chatRoomNo.getText().toString());
+        myid.setText(intent.getStringExtra("chatid"));
+        Log.i("너의 아이디를 보여라", myid.getText().toString());
 
         ListView listView = (ListView)findViewById(R.id.chat);
         final MessageAdapter adapter = new MessageAdapter(this);
         listView.setAdapter(adapter);
 
         Button exBtn = (Button)findViewById(R.id.exBtn);
+        Button toWRBtn = (Button)findViewById(R.id.toWRBtn);
         Button sendBtn = (Button)findViewById(R.id.sendBtn);
         exBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -123,6 +129,18 @@ public class ClientActivity extends AppCompatActivity {
                 t.start();
             }
         });
+
+        toWRBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Log.i("대기실로 이동", "");
+                Intent i = new Intent();
+                ComponentName cname = new ComponentName("com.example.chatapplication", "com.example.chatapplication.WaitingRoomActivity");
+                i.setComponent(cname);
+                startActivity(i);
+            }
+        });
+
 
         final Handler handler = new Handler(){
             @Override
@@ -150,6 +168,7 @@ public class ClientActivity extends AppCompatActivity {
                 SendRunnable sendRunnable = new SendRunnable(blockingQeque);
                 Thread t = new Thread(sendRunnable);
                 t.start();
+                msgEt.setText("");
             }
         });
     }
