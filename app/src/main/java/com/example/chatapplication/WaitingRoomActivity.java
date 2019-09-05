@@ -12,10 +12,12 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -58,22 +60,30 @@ public class WaitingRoomActivity extends AppCompatActivity {
                 br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 out = new PrintWriter(socket.getOutputStream());
                 Log.i("ReceiveRunnable", "서버 연결 성공");
-                out.println("/@showRoomList");
+                out.println("/@showRoomList" );
                 out.flush();
             }catch (Exception e) {
                 Log.i("ReceiveRunnable", "서버 연결 실패" +  e.toString());
             }
             try {
                 while (((msg = br.readLine()) != null)){
+                    Log.i("Waiting_Room_Receive", "받는다.");
                     Bundle bundle = new Bundle();
                     String[] msgArray = msg.split(",");
                     Log.i("Waiting_Room_Receive", msgArray[0]);
                     Log.i("Waiting_Room_Receive", msgArray[1]);
 
                     if (msgArray[0].equals("/@showRoomList")){
+                        Log.i("Waiting_Room_Receive", "0이다.");
                         Log.i("Waiting_Room_Receive", msg);
                         bundle.putString("data", msgArray[1]);
                         bundle.putString("protocol", "/@showRoomList");
+                    }
+                    if (msgArray[0].equals("/@updateRoomList")){
+                        Log.i("Waiting_Room_Receive", "방만들었");
+                        Log.i("Waiting_Room_Receive", msg);
+                        bundle.putStringArray("data", msgArray);
+                        bundle.putString("protocol", "/@updateRoomList");
                     }
                     Message message = new Message();
                     message.setData(bundle);
@@ -94,10 +104,13 @@ public class WaitingRoomActivity extends AppCompatActivity {
         @Override
         public void run() {
             try {
-                String msg = (String)blockingQueue.take();
-                out.println(msg);
-                out.flush();
-                Log.i("SendRunnable", "보내기 얍얍얍!"+msg);
+                while(true){
+                    String msg = (String)blockingQueue.take();
+                    Log.i("SendRunnable", "보내기 얍얍얍!"+msg);
+                    out.println(msg);
+                    out.flush();
+                    Log.i("SendRunnable", "보내기 얍얍얍!___________"+msg);
+                }
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -135,18 +148,48 @@ public class WaitingRoomActivity extends AppCompatActivity {
                     String data = bundle.getString("data");
                     wr_count.setText(data);
                 }
-//                adapter.addItem(mymsg);
-//                adapter.notifyDataSetChanged();
-//                Log.i("Handler", mymsg);
+                if (protocol.equals("/@updateRoomList")){
+                    String[] data = bundle.getStringArray("data");
+                    for (int i = 0; i < data.length-1; i++){
+                        Log.i("data이다.", data[i]);
+                    }
+                    wr_count.setText(data[1]);
+                    List<Room> rlist = new ArrayList<Room>();
+                    for (int i = 2; i < data.length-1; i+=3){
+                        Room r = new Room();
+                        int no = Integer.parseInt(data[i]);
+                        r.setRoomno(no);
+                        r.setTitle(data[i+1]);
+                        r.setBoss(data[i+2]);
+                        rlist.add(r);
+                        adapter.addItem(r);
+                        adapter.notifyDataSetChanged();
+                    }
+//                    RoomAdapter roomAdapter2 = new RoomAdapter(getApplicationContext(), rlist);
+//                    listView.setAdapter(adapter);
+                    Log.i("Handler", "리스트 출력");
+                }
+
+                listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                        Log.i("Handler_Item_Click", "클릭되었다.");
+//                        Intent intent = new Intent();
+//                        intent.putExtra("roomNo", );
+                        int roomNo = ((Room)adapter.getItem(i)).getRoomno();
+                        Toast.makeText(getApplicationContext(), "" + roomNo, Toast.LENGTH_SHORT).show();
+
+                    }
+                });
             }
         };
 
         ReceiveRunnable receiveRunnable = new ReceiveRunnable(br, handler);
-        //SendRunnable sendRunnable = new SendRunnable(blockingQeque);
+        SendRunnable sendRunnable = new SendRunnable(blockingQeque);
         Thread rt = new Thread(receiveRunnable);
-        //Thread st = new Thread(sendRunnable);
+        Thread st = new Thread(sendRunnable);
         rt.start();
-        //st.start();
+        st.start();
 
 
         wr_exBtn.setOnClickListener(new View.OnClickListener() {
@@ -188,9 +231,9 @@ public class WaitingRoomActivity extends AppCompatActivity {
                         roomManager.addRoom(room);
                         String str = "/@newRoom" + ',' +room.getTitle() + ',' +room.getBoss();
                         blockingQeque.add(str);
-                        SendRunnable sendRunnable = new SendRunnable(blockingQeque);
-                        Thread t = new Thread(sendRunnable);
-                        t.start();
+//                        SendRunnable sendRunnable = new SendRunnable(blockingQeque);
+//                        Thread t = new Thread(sendRunnable);
+//                        t.start();
 
                         Log.i("STR__________", str);
                     }

@@ -19,6 +19,10 @@ public class RoomAdapter extends BaseAdapter {
         list = new ArrayList<Room>();
     }
 
+    public RoomAdapter(Context context, List<Room> rlist) {
+        this.list = rlist;
+    }
+
     public void addItem(Room room){
         list.add(room);
     }
