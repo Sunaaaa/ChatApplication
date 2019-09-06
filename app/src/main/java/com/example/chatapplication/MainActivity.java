@@ -30,12 +30,14 @@ public class MainActivity extends AppCompatActivity {
                 Intent ia = new Intent();
                 ComponentName cname = new ComponentName("com.example.chatapplication","com.example.chatapplication.ChatService");
                 i.setComponent(cname);
-                i.putExtra("user",user);
+                i.putExtra("suser",user);
+                Log.i("Main",user.getUsername());
                 startService(i);
                 Log.i("Main","ChatService 실행");
 
                 ia.setAction("WAITING_ROOM_ACTIVITY");
                 ia.putExtra("user",user);
+                Log.i("Main",user.getUsername());
                 startActivity(ia);
                 Log.i("Main","Waiting Room Activity실행");
 

@@ -34,17 +34,20 @@ import java.util.stream.Stream;
 
 public class WaitingRoomActivity extends AppCompatActivity {
 
-    RoomManager roomManager = new RoomManager();
+    List<Room> roomList;
     TextView wr_myid;
     TextView wr_count;
     ChatUser user;
     ChatService chatService;
     boolean isService = false;
+    WaitingRoomActivity waitingRoomActivity;
 
-    private ServiceConnection connection = new ServiceConnection() {
+    ServiceConnection connection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
+            Log.i("BIND"," 바인딩을 시작한다.");
             ChatService.ChatBinder chatBinder = (ChatService.ChatBinder) iBinder;
+            Log.i("BIND","바인딩을 성공했는가");
             chatService = chatBinder.getService();
             isService = true;
         }
@@ -85,12 +88,12 @@ public class WaitingRoomActivity extends AppCompatActivity {
         Intent fromServiceIntent = getIntent();
         // 사용자 이름 가져와
         user = fromServiceIntent.getParcelableExtra("user");
-        Log.i("Waiting_Room","내 이름은 " + user.getUsername());
-        wr_myid.setText(user.getUsername());
-
-        // 채팅방 총 개수
-        int roomSize = roomManager.getRoomList().size();
-        wr_count.setText("채팅 (" + roomSize + ")");
+        if (user != null){
+            Log.i("fromServiceIntent","꺄꺄꺄꺄꺄꺄꺄꺄꺄꺄꺄꺆꺄ㅑ꺆꺄꺄꺄");
+            wr_myid.setText(user.getUsername());
+        }else {
+            Log.i("fromServiceIntent","왜.......왜......왜......안넘어와요...");
+        }
 
         // 채팅방 목록
         final RoomAdapter adapter = new RoomAdapter(this);
@@ -132,39 +135,56 @@ public class WaitingRoomActivity extends AppCompatActivity {
 
                 // 경고창 용도로 사용되는 AlertDialog 생성
                 AlertDialog.Builder dialog = new AlertDialog.Builder(WaitingRoomActivity.this);
-
-                // Dialog에 title과 message 설정
                 dialog.setTitle("새 채팅방 만들기");
                 dialog.setMessage("새로 만드는 채팅방의 이름을 적어 주세요.");
-
-                // Dialog 에 입력상자 (EditText)
                 dialog.setView(et);
 
                 // Dialog의 취소/확인 버튼에 이벤트 적용
-                // positive 버튼 : Dialog 인터페이스가 가지는 onClickListener의 인스턴스를 가짐 -> Dialog의 onClick() 메소드를 오버 라이드
                 dialog.setPositiveButton("YES", new DialogInterface.OnClickListener(){
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         room.setTitle(et.getText().toString());
                         room.setBoss(user.getUsername());
-                        roomManager.addRoom(room);
                         String str = "/@newRoom" + ',' +room.getTitle() + ',' +room.getBoss();
-                        //blockingQeque.add(str);
-//                        SendRunnable sendRunnable = new SendRunnable(blockingQeque);
-//                        Thread t = new Thread(sendRunnable);
-//                        t.start();
-
+                        chatService.toServer(str);
                         Log.i("STR__________", str);
                     }
                 });
                 dialog.setNegativeButton("NO", new
                         DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                    }
-                });
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                            }
+                        });
                 dialog.show();
             }
         });
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        Log.i("receiveDate_onNewIntent", "왜 여기 안들어 오시나요....");
+        String receiveDate = intent.getStringExtra("receiveIntent");
+        Log.i("receiveDate_onNewIntent", receiveDate);
+        String[] msgArray = receiveDate.split(",");
+         switch (msgArray[0]){
+             case "/@showRoomList" :
+                 Log.i("receiveDate_onNewIntent", "/@showRoomList");
+                 if (msgArray[1].equals("0")) {
+                     wr_count.setText("0");
+                 } else {
+                     wr_count.setText(msgArray[1]);
+                 }
+                 break;
+             case "/@msg" :
+                 Log.i("receiveDate_onNewIntent", "/@msg");
+                 Toast.makeText(getApplicationContext(), "메시지 왔어요~", Toast.LENGTH_SHORT);
+                 break;
+             case "/@newRoom" :
+                 Log.i("receiveDate_onNewIntent", "/@newRoom");
+                 Toast.makeText(getApplicationContext(), "새로운 방 만들었다는디요 ~", Toast.LENGTH_SHORT);
+                 break;
+         }
     }
 }
