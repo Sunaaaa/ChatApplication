@@ -31,4 +31,4 @@
 ### Android studio
 
 - Service
-  - Server와의 통신을 위해 모든 액티비티에서 new Socket()을 하는 낭비를 줄이기 위해, Service를 구현한다.
+  - Server와의 통신을 위해 모든 액티비티에서 new Socket()의 남용을 피하기 위해, Service를 구현한다.
